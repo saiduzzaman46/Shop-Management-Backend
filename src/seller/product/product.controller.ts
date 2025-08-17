@@ -10,6 +10,7 @@ import {
   Get,
   Patch,
   Param,
+  Delete,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { Roles } from 'src/auth/roles.decorator';
@@ -92,4 +93,14 @@ export class ProductController {
   // async getAllProducts() {
   //   return this.productService.getAllProducts();
   // }
+
+  @Delete('deleteproduct/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('seller')
+  async deleteMyProduct(
+    @Param('id') productId: string,
+    @Request() req,
+  ): Promise<{ message: string }> {
+    return this.productService.deleteMyProduct(productId, req.user.id);
+  }
 }

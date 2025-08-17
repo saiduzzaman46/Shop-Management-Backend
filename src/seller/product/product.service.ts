@@ -102,4 +102,31 @@ export class ProductService {
   //     relations: ['seller', 'category', 'brand'],
   //   });
   // }
+
+  async deleteMyProduct(productId: string, userId: string): Promise<{ message: string }> {
+    const seller = await this.sellerRepository.findOne({
+      where: { user: { id: userId } },
+      select: ['id'],
+    });
+
+    if (!seller) {
+      throw new BadRequestException('Seller not found for the authenticated user.');
+    }
+
+    const product = await this.productRepository.findOne({
+      where: {
+        productId,
+        seller: { id: seller.id },
+      },
+    });
+
+    if (!product) {
+      throw new BadRequestException(
+        'Product not found or you are not authorized to delete this product.',
+      );
+    }
+
+    await this.productRepository.remove(product);
+    return { message: 'Product deleted successfully.' };
+  }
 }

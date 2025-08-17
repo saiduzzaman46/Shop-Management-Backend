@@ -117,7 +117,11 @@ export class AuthService {
 
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
     const { email, resetCode, newPassword } = resetPasswordDto;
-    const user = await this.findUser(email);
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    // console.log(user);
 
     if (
       user.resetCode !== resetCode ||
