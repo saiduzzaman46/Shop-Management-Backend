@@ -14,10 +14,9 @@ import {
 } from 'class-validator';
 
 export class CreateCustomerDto {
-  @IsOptional()
+  @IsString()
   @IsEmail({}, { message: 'Invalid email format' })
-  @Matches(/@aiub\.edu$/, { message: 'Email must be from aiub.edu domain' })
-  email?: string;
+  email: string;
 
   @IsOptional()
   @MinLength(6, { message: 'Password must be at least 6 characters long' })

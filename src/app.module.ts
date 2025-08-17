@@ -11,6 +11,8 @@ dotenv.config();
   imports: [
     AdminModule,
     CustomerModule,
+    SellerModule,
+    ProductModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,

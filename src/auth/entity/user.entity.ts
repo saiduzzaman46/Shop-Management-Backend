@@ -2,7 +2,7 @@ import { Entity, Column, OneToOne, CreateDateColumn, PrimaryColumn, BeforeInsert
 import { v4 as uuidv4 } from 'uuid';
 import { Seller } from 'src/seller/entity/create.seller.entity';
 import { Exclude } from 'class-transformer';
-// import { Customer } from 'src/customers/customer.entity';
+import { Customer } from 'src/customer/entity/signup.entity';
 // import { Admin } from 'src/admins/admin.entity';
 
 @Entity('users')
@@ -39,8 +39,8 @@ export class User {
   })
   seller: Seller;
 
-  //   @OneToOne(() => Customer, (customer) => customer.user)
-  //   customer: Customer;
+  @OneToOne(() => Customer, (customer) => customer.user)
+  customer: Customer;
 
   //   @OneToOne(() => Admin, (admin) => admin.user)
   //   admin: Admin;
