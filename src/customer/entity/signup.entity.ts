@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryColumn, BeforeInsert } from 'typeorm';
+import { User } from 'src/auth/entity/user.entity';
+import { Entity, Column, PrimaryColumn, BeforeInsert, OneToOne, JoinColumn } from 'typeorm';
 
 @Entity('customers')
 export class Customer {
@@ -16,12 +17,6 @@ export class Customer {
   @Column({ nullable: true })
   fullName: string;
 
-  @Column({ unique: true })
-  email: string;
-
-  @Column()
-  password: string;
-
   @Column()
   gender: 'male' | 'female';
 
@@ -33,4 +28,10 @@ export class Customer {
 
   @Column({ nullable: true })
   profilePic?: string;
+
+  @OneToOne(() => User, (user) => user.seller, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  user: User;
 }
