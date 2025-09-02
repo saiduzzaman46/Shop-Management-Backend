@@ -19,9 +19,6 @@ export class Seller {
   @Column({ length: 150 })
   fullName: string;
 
-  @Column({ length: 100, unique: true })
-  username: string;
-
   @Column()
   phone: string;
 
@@ -32,7 +29,7 @@ export class Seller {
   nidImage?: string[];
 
   @Column({ nullable: true })
-  address?: string;
+  storeAddress?: string;
 
   @Column({ nullable: true })
   storeName?: string;

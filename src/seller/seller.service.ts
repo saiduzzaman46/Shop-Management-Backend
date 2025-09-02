@@ -46,11 +46,11 @@ export class SellerService {
       { email: createSellerDto.email },
       'Email already exists',
     );
-    await this.checkIfExists(
-      this.sellerRepository,
-      { username: createSellerDto.username },
-      'Username already exists',
-    );
+    // await this.checkIfExists(
+    //   this.sellerRepository,
+    //   { username: createSellerDto.username },
+    //   'Username already exists',
+    // );
 
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(createSellerDto.password, salt);
@@ -65,11 +65,11 @@ export class SellerService {
 
     const seller = this.sellerRepository.create({
       fullName: createSellerDto.fullName,
-      username: createSellerDto.username,
+      // username: createSellerDto.username,
       phone: createSellerDto.phone,
       nid: createSellerDto.nid,
       nidImage: createSellerDto.nidImage,
-      address: createSellerDto.address,
+      storeAddress: createSellerDto.address,
       storeName: createSellerDto.storeName,
       user: savedUser,
       isActive: false,
@@ -122,16 +122,16 @@ export class SellerService {
       );
       user.email = updateData.email;
     }
-    if (updateData.username) {
-      await this.checkIfExists(
-        this.sellerRepository,
-        {
-          username: updateData.username,
-        },
-        'Username already exists',
-      );
-      user.seller.username = updateData.username;
-    }
+    // if (updateData.username) {
+    //   await this.checkIfExists(
+    //     this.sellerRepository,
+    //     {
+    //       username: updateData.username,
+    //     },
+    //     'Username already exists',
+    //   );
+    //   user.seller.username = updateData.username;
+    // }
 
     Object.assign(user.seller, updateData);
 
