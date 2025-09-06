@@ -32,7 +32,7 @@ export class AuthService {
     return user;
   };
 
-  async signIn(signInDto: SignInDto): Promise<{ token: string }> {
+  async signIn(signInDto: SignInDto): Promise<{ token: string; role: string }> {
     const { email, password } = signInDto;
 
     if (!email || !password) {
@@ -54,7 +54,8 @@ export class AuthService {
     const payload = { id: user.id, role: user.role };
     const token = await this.jwtService.signAsync(payload);
 
-    return { token };
+    // console.log(token);
+    return { token, role: user.role };
   }
 
   async updatePassword(

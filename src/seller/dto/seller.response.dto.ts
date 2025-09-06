@@ -16,7 +16,7 @@ export class SellerResponseDto {
   @Expose()
   nidImage?: string[];
   @Expose()
-  address?: string;
+  storeAddress?: string;
   @Expose()
   storeName?: string;
   @Expose()

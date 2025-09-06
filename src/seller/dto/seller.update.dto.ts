@@ -6,10 +6,6 @@ export class UpdateSellerDto {
   @Matches(/^[A-Za-z\s]+$/, { message: 'Name must contain only alphabets' })
   @MaxLength(150, { message: 'Name is too long' })
   fullName?: string;
-  @IsString()
-  @IsOptional()
-  @MaxLength(100, { message: 'Username is too long' })
-  username?: string;
   @IsEmail({}, { message: 'Invalid email format' })
   @IsOptional()
   email?: string;
@@ -19,7 +15,7 @@ export class UpdateSellerDto {
   phone?: string;
   @IsString()
   @IsOptional()
-  address?: string;
+  storeAddress?: string;
   @IsString()
   @IsOptional()
   storeName?: string;

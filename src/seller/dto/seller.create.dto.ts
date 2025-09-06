@@ -15,11 +15,6 @@ export class CreateSellerDto {
   @MaxLength(150, { message: 'Name is too long' })
   fullName: string;
 
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100, { message: 'Username is too long' })
-  username: string;
-
   @IsEmail({}, { message: 'Invalid email format' })
   @IsNotEmpty()
   email: string;
@@ -47,7 +42,7 @@ export class CreateSellerDto {
 
   @IsString()
   @IsOptional()
-  address?: string;
+  storeAddress?: string;
 
   @IsString()
   @IsOptional()

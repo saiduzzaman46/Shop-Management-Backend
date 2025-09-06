@@ -16,7 +16,6 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { CreateSellerDto } from './dto/seller.create.dto';
 import { FileCleanupInterceptor } from '../utils/file-cleanup.interceptor';
 import { insertFile } from 'src/utils/multer.util';
-import { Seller } from './entity/create.seller.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { UpdateSellerDto } from './dto/seller.update.dto';
 import { SellerResponseDto } from './dto/seller.response.dto';
@@ -53,7 +52,7 @@ export class SellerController {
   signupSeller(
     @Body() createSellerDto: CreateSellerDto,
     @UploadedFiles() nidImage: Express.Multer.File[],
-  ): Promise<Seller> {
+  ): Promise<{ message: string }> {
     if (!nidImage || nidImage.length === 0) {
       throw new BadRequestException('NID image is required');
     }
@@ -76,8 +75,9 @@ export class SellerController {
   async updateProfile(
     @Request() req,
     @Body() updateData: UpdateSellerDto,
-  ): Promise<SellerResponseDto> {
+  ): Promise<{ message: string }> {
     const id: string = req.user.id;
+    // console.log('DTO received:', updateData, id);
     return this.sellerService.updateProfile(id, updateData);
   }
 

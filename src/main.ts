@@ -13,6 +13,12 @@ async function bootstrap() {
     }),
   );
 
+  app.enableCors({
+    origin: process.env.ORIGIN || 'http://localhost:8000',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
+
   await app.listen(port, () => {
     console.log(`The app runing on port ${port}`);
   });

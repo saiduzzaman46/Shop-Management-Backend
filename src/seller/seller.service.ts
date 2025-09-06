@@ -40,7 +40,7 @@ export class SellerService {
   }
 
   //👉 Seller-related methods
-  async signupSeller(createSellerDto: CreateSellerDto): Promise<Seller> {
+  async signupSeller(createSellerDto: CreateSellerDto): Promise<{ message: string }> {
     await this.checkIfExists(
       this.userRepository,
       { email: createSellerDto.email },
@@ -69,15 +69,15 @@ export class SellerService {
       phone: createSellerDto.phone,
       nid: createSellerDto.nid,
       nidImage: createSellerDto.nidImage,
-      storeAddress: createSellerDto.address,
+      storeAddress: createSellerDto.storeAddress,
       storeName: createSellerDto.storeName,
       user: savedUser,
       isActive: false,
     });
 
-    const savedSeller = await this.sellerRepository.save(seller);
+    await this.sellerRepository.save(seller);
 
-    return savedSeller;
+    return { message: 'Seller account created successfully' };
   }
 
   async getProfile(userId: string) {
@@ -93,28 +93,14 @@ export class SellerService {
     });
   }
 
-  async updateProfile(userId: string, updateData: UpdateSellerDto): Promise<SellerResponseDto> {
+  async updateProfile(userId: string, updateData: UpdateSellerDto): Promise<{ message: string }> {
     const user = await this.findUser(userId);
 
-    // if (updateData.email && updateData.email !== user.email) {
-    //   const emailExists = await this.userRepository.findOne({ where: { email: updateData.email } });
-    //   if (emailExists) {
-    //     throw new BadRequestException('Email already exists');
-    //   }
-    //   user.email = updateData.email;
-    // }
+    if (!Object.keys(updateData).length) {
+      throw new BadRequestException('No data provided for update');
+    }
 
-    // if (updateData.username && updateData.username !== user.seller.username) {
-    //   const usernameExists = await this.sellerRepository.findOne({
-    //     where: { username: updateData.username },
-    //   });
-    //   if (usernameExists) {
-    //     throw new BadRequestException('Username already exists');
-    //   }
-    //   user.seller.username = updateData.username;
-    // }
-
-    if (updateData.email) {
+    if (updateData.email && updateData.email !== user.email) {
       await this.checkIfExists(
         this.userRepository,
         { email: updateData.email },
@@ -122,22 +108,67 @@ export class SellerService {
       );
       user.email = updateData.email;
     }
-    // if (updateData.username) {
-    //   await this.checkIfExists(
-    //     this.sellerRepository,
-    //     {
-    //       username: updateData.username,
-    //     },
-    //     'Username already exists',
-    //   );
-    //   user.seller.username = updateData.username;
-    // }
 
-    Object.assign(user.seller, updateData);
+    // Update seller fields only if defined
+    for (const [key, value] of Object.entries(updateData)) {
+      if (value !== undefined && key !== 'email') {
+        user.seller[key] = value;
+      }
+    }
 
     await this.userRepository.save(user);
     await this.sellerRepository.save(user.seller);
 
-    return this.getProfile(user.id);
+    // console.log('Updated user:', user, user.seller); // Debug log
+
+    return { message: 'Profile updated successfully' };
   }
+
+  //   async updateProfile(userId: string, updateData: UpdateSellerDto): Promise<{ message: string }> {
+  //   const user = await this.findUser(userId);
+
+  //   // if (updateData.email && updateData.email !== user.email) {
+  //   //   const emailExists = await this.userRepository.findOne({ where: { email: updateData.email } });
+  //   //   if (emailExists) {
+  //   //     throw new BadRequestException('Email already exists');
+  //   //   }
+  //   //   user.email = updateData.email;
+  //   // }
+
+  //   // if (updateData.username && updateData.username !== user.seller.username) {
+  //   //   const usernameExists = await this.sellerRepository.findOne({
+  //   //     where: { username: updateData.username },
+  //   //   });
+  //   //   if (usernameExists) {
+  //   //     throw new BadRequestException('Username already exists');
+  //   //   }
+  //   //   user.seller.username = updateData.username;
+  //   // }
+
+  //   if (updateData.email) {
+  //     await this.checkIfExists(
+  //       this.userRepository,
+  //       { email: updateData.email },
+  //       'Email already exists',
+  //     );
+  //     user.email = updateData.email;
+  //   }
+  //   // if (updateData.username) {
+  //   //   await this.checkIfExists(
+  //   //     this.sellerRepository,
+  //   //     {
+  //   //       username: updateData.username,
+  //   //     },
+  //   //     'Username already exists',
+  //   //   );
+  //   //   user.seller.username = updateData.username;
+  //   // }
+
+  //   Object.assign(user.seller, updateData);
+
+  //   await this.userRepository.save(user);
+  //   await this.sellerRepository.save(user.seller);
+
+  //   return { message: 'Profile updated successfully' };
+  // }
 }
