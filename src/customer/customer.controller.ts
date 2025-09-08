@@ -69,7 +69,7 @@ export class CustomerController {
 
   @UseGuards(CustomerGuard)
   @Patch('updatephone/:id')
-  updatePhone(@Param('id') id: number, @Body('phone') phone: number) {
+  updatePhone(@Param('id') id: string, @Body('phone') phone: number) {
     return this.customerService.updatePhoneNumber(id, phone);
   }
 
@@ -81,7 +81,7 @@ export class CustomerController {
 
   @UseGuards(CustomerGuard)
   @Delete('deletecustomer')
-  deleteCustomer(@Query('id', ParseIntPipe) id: number) {
+  deleteCustomer(@Query('id', ParseIntPipe) id: string) {
     return this.customerService.deleteCustomer(id);
   }
 

@@ -1,13 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException, UseGuards } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCustomerDto } from './dto/create.customer.dto';
-import { IsNull, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Customer } from './entity/signup.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/auth/entity/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UpdatePasswordDto } from './dto/updatePassword.dto';
-import { text } from 'stream/consumers';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Product } from 'src/seller/product/entity/product.entity';
 
@@ -86,7 +85,7 @@ export class CustomerService {
     return user;
   }
 
-  async updatePhoneNumber(id: number, newPhone: number): Promise<Customer> {
+  async updatePhoneNumber(id: string, newPhone: number): Promise<Customer> {
     const customer = await this.customerRepository.findOne({ where: { id } });
     if (!customer) throw new NotFoundException('User not found');
 
@@ -100,7 +99,7 @@ export class CustomerService {
     });
   }
 
-  async deleteCustomer(id: number): Promise<string> {
+  async deleteCustomer(id: string): Promise<string> {
     const result = await this.customerRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException('User not found');

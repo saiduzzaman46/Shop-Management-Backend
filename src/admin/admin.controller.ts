@@ -6,6 +6,7 @@ import {
   UseGuards,
   UseInterceptors,
   Request,
+  Get,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
@@ -76,5 +77,15 @@ export class AdminController {
   @Roles('admin')
   async createCategory(@Body() createCategoryDto: CreateCategoryDto[]): Promise<Category[]> {
     return this.adminServise.createCategory(createCategoryDto);
+  }
+
+  @Get('getbrands')
+  async getAllBrands(): Promise<Brand[]> {
+    return this.adminServise.getAllBrands();
+  }
+
+  @Get('getcategories')
+  async getAllCategories(): Promise<Category[]> {
+    return this.adminServise.getAllCategories();
   }
 }

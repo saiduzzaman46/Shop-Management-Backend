@@ -1,15 +1,11 @@
 import { User } from 'src/auth/entity/user.entity';
-import { Entity, Column, PrimaryColumn, BeforeInsert, OneToOne, JoinColumn } from 'typeorm';
+import { Order } from 'src/order/entities/order.entity';
+import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn, OneToMany } from 'typeorm';
 
 @Entity('customers')
 export class Customer {
-  @PrimaryColumn()
-  id: number;
-
-  @BeforeInsert()
-  generateId() {
-    this.id = Math.floor(10000 + Math.random() * 90000);
-  }
+  @PrimaryColumn('uuid')
+  id: string;
 
   @Column({ default: true })
   isActive: boolean;
@@ -34,4 +30,7 @@ export class Customer {
   })
   @JoinColumn()
   user: User;
+
+  @OneToMany(() => Order, (order) => order.customer)
+  orders: Order[];
 }

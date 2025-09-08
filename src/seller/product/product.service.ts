@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entity/product.entity';
 import { CreateProductDto } from './dto/create.product.dto';
@@ -6,6 +6,9 @@ import { Repository } from 'typeorm';
 import { Seller } from '../entity/create.seller.entity';
 import { Category } from 'src/admin/entity/categories.entity';
 import { Brand } from 'src/admin/entity/brand.entity';
+import { ProductResponseDto } from './dto/product.response.dto';
+import { join } from 'path';
+import { existsSync } from 'fs';
 
 @Injectable()
 export class ProductService {
@@ -97,12 +100,23 @@ export class ProductService {
     return seller.products;
   }
 
-  // async getAllProducts(): Promise<Product[]> {
-  //   return await this.productRepository.find({
-  //     relations: ['seller', 'category', 'brand'],
-  //   });
-  // }
+  async getAllProducts(): Promise<ProductResponseDto[]> {
+    const products = await this.productRepository.find({
+      relations: ['seller', 'category', 'brand'],
+    });
 
+    return products.map((p) => ({
+      productId: p.productId,
+      title: p.title,
+      description: p.description,
+      price: p.price,
+      costPrice: p.costPrice,
+      quantity: p.quantity,
+      images: p.images,
+      brandName: p.brand?.name || null,
+      categoryName: p.category?.name || null,
+    }));
+  }
   async deleteMyProduct(productId: string, userId: string): Promise<{ message: string }> {
     const seller = await this.sellerRepository.findOne({
       where: { user: { id: userId } },
@@ -128,5 +142,17 @@ export class ProductService {
 
     await this.productRepository.remove(product);
     return { message: 'Product deleted successfully.' };
+  }
+
+  private readonly uploadPath = join(__dirname, '..', '..', '..', '..', 'uploads', 'productImages');
+
+  getImagePath(filename: string): string {
+    const filePath = join(this.uploadPath, filename);
+
+    if (!existsSync(filePath)) {
+      throw new NotFoundException('Image not found');
+    }
+
+    return filePath;
   }
 }

@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ObjectLiteral, Repository } from 'typeorm';
 import { CreateSellerDto } from './dto/seller.create.dto';
@@ -34,8 +40,15 @@ export class SellerService {
     errorMessage: string,
   ): Promise<void> {
     const existing = await repository.findOne({ where: condition });
+
     if (existing) {
-      throw new BadRequestException(errorMessage);
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.CONFLICT,
+          message: errorMessage,
+        },
+        HttpStatus.CONFLICT,
+      );
     }
   }
 

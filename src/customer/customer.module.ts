@@ -7,10 +7,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { User } from 'src/auth/entity/user.entity';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { Product } from 'src/seller/product/entity/product.entity';
+import { Order } from 'src/order/entities/order.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Customer, User, Product]),
+    TypeOrmModule.forFeature([Customer, User, Product, Order]),
     JwtModule.register({
       global: true,
       secret: 'I use the weak guard in my project 4876324356874623',

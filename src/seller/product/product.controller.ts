@@ -11,6 +11,7 @@ import {
   Patch,
   Param,
   Delete,
+  Res,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { Roles } from 'src/auth/roles.decorator';
@@ -21,6 +22,8 @@ import { Product } from './entity/product.entity';
 import { CreateProductDto } from './dto/create.product.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
+import { ProductResponseDto } from './dto/product.response.dto';
+import { Response } from 'express'; // ✅ make sure to import this
 
 @Controller('product')
 export class ProductController {
@@ -89,10 +92,10 @@ export class ProductController {
     return this.productService.getMyProducts(req.user.id);
   }
 
-  // @Get('all')
-  // async getAllProducts() {
-  //   return this.productService.getAllProducts();
-  // }
+  @Get('getallproducts')
+  async getAllProducts(): Promise<ProductResponseDto[]> {
+    return this.productService.getAllProducts();
+  }
 
   @Delete('deleteproduct/:id')
   @UseGuards(AuthGuard, RolesGuard)
@@ -102,5 +105,15 @@ export class ProductController {
     @Request() req,
   ): Promise<{ message: string }> {
     return this.productService.deleteMyProduct(productId, req.user.id);
+  }
+
+  @Get('getimage/:filename')
+  getProductImage(@Param('filename') filename: string, @Res() res: Response) {
+    try {
+      const filePath = this.productService.getImagePath(filename);
+      return res.sendFile(filePath);
+    } catch (error) {
+      return res.status(404).json({ message: 'Image not found' });
+    }
   }
 }

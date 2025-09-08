@@ -46,4 +46,10 @@ export class AdminService {
     const category = this.categoryRepository.create(createCategoryDto);
     return this.categoryRepository.save(category);
   }
+  async getAllBrands(): Promise<Brand[]> {
+    return await this.brandRepository.find();
+  }
+  async getAllCategories(): Promise<Category[]> {
+    return await this.categoryRepository.find();
+  }
 }

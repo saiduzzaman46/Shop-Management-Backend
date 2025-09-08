@@ -28,6 +28,11 @@ export class CreateProductDto {
   @Type(() => Number)
   @IsNumber()
   @Min(0)
+  costPrice: number;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
   quantity: number;
 
   @Type(() => Number)
