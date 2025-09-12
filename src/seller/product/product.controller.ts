@@ -24,6 +24,8 @@ import { AuthGuard } from 'src/auth/auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { ProductResponseDto } from './dto/product.response.dto';
 import { Response } from 'express'; // ✅ make sure to import this
+import { get } from 'http';
+import { UpadatateProductDto } from './dto/update.product.dto';
 
 @Controller('product')
 export class ProductController {
@@ -59,7 +61,21 @@ export class ProductController {
     return this.productService.createProduct(createProductDto, req.user.id);
   }
 
-  @Patch('updateproduct/:id')
+  // ✅ Update product data only (no image upload)
+  @Patch('updateproduct/data/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('seller')
+  async updateProductData(
+    @Request() req,
+    @Body() updateProductDto: UpadatateProductDto,
+    @Param('id') productId: string,
+  ): Promise<Product> {
+    // console.log('Update DTO:', updateProductDto);
+    return this.productService.updateProductData(productId, updateProductDto, req.user.id);
+  }
+
+  // ✅ Update product images only
+  @Patch('updateproduct/images/:id')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles('seller')
   @UseInterceptors(
@@ -75,14 +91,13 @@ export class ProductController {
     ),
     new FileCleanupInterceptor('./uploads/productImages'),
   )
-  async updateProduct(
+  async updateProductImages(
     @Request() req,
-    @Body() updateProductDto: Partial<CreateProductDto>,
     @Param('id') productId: string,
     @UploadedFiles() images: Express.Multer.File[],
   ): Promise<Product> {
-    updateProductDto.images = images.map((image) => image.filename);
-    return this.productService.updateProduct(productId, updateProductDto, req.user.id);
+    const filenames = images.map((image) => image.filename);
+    return this.productService.updateProductImages(productId, filenames, req.user.id);
   }
 
   @Get('myproducts')
@@ -95,6 +110,11 @@ export class ProductController {
   @Get('getallproducts')
   async getAllProducts(): Promise<ProductResponseDto[]> {
     return this.productService.getAllProducts();
+  }
+
+  @Get('getproduct/:id')
+  async getProductById(@Param('id') productId: string): Promise<ProductResponseDto> {
+    return this.productService.getProductById(productId);
   }
 
   @Delete('deleteproduct/:id')

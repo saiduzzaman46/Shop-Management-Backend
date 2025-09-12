@@ -9,6 +9,7 @@ import { Brand } from 'src/admin/entity/brand.entity';
 import { ProductResponseDto } from './dto/product.response.dto';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { UpadatateProductDto } from './dto/update.product.dto';
 
 @Injectable()
 export class ProductService {
@@ -54,9 +55,9 @@ export class ProductService {
     return await this.productRepository.save(product);
   }
 
-  async updateProduct(
+  async updateProductData(
     productId: string,
-    updateProductDto: Partial<CreateProductDto>,
+    updateProductDto: UpadatateProductDto,
     userId: string,
   ): Promise<Product> {
     const seller = await this.sellerRepository.findOne({
@@ -67,23 +68,45 @@ export class ProductService {
     if (!seller) {
       throw new BadRequestException('Seller not found for the authenticated user.');
     }
-    console.log(seller);
+
     const product = await this.productRepository.findOne({
-      where: {
-        productId,
-        seller: { id: seller.id },
-      },
+      where: { productId, seller: { id: seller.id } },
     });
+
+    if (!product) {
+      throw new BadRequestException(
+        'Product not found or you are not authorized to update this product.',
+      );
+    }
+    Object.assign(product, updateProductDto);
+    return await this.productRepository.save(product);
+  }
+
+  // ✅ Update product images only
+  async updateProductImages(productId: string, images: string[], userId: string): Promise<Product> {
+    const seller = await this.sellerRepository.findOne({
+      where: { user: { id: userId } },
+      select: ['id'],
+    });
+
+    if (!seller) {
+      throw new BadRequestException('Seller not found for the authenticated user.');
+    }
+
+    const product = await this.productRepository.findOne({
+      where: { productId, seller: { id: seller.id } },
+    });
+
     if (!product) {
       throw new BadRequestException(
         'Product not found or you are not authorized to update this product.',
       );
     }
 
-    Object.assign(product, updateProductDto);
+    // ✅ Replace images
+    product.images = images;
     return await this.productRepository.save(product);
   }
-
   async getMyProducts(userId: string): Promise<Product[]> {
     const seller = await this.sellerRepository.findOne({
       where: { user: { id: userId } },
@@ -115,8 +138,33 @@ export class ProductService {
       images: p.images,
       brandName: p.brand?.name || null,
       categoryName: p.category?.name || null,
+      tags: p.tags,
     }));
   }
+  async getProductById(productId: string): Promise<ProductResponseDto> {
+    const product = await this.productRepository.findOne({
+      where: { productId },
+      relations: ['seller', 'category', 'brand'],
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    return {
+      productId: product.productId,
+      title: product.title,
+      description: product.description,
+      price: product.price,
+      costPrice: product.costPrice,
+      quantity: product.quantity,
+      images: product.images,
+      brandName: product.brand?.name || null,
+      categoryName: product.category?.name || null,
+      tags: product.tags,
+    };
+  }
+
   async deleteMyProduct(productId: string, userId: string): Promise<{ message: string }> {
     const seller = await this.sellerRepository.findOne({
       where: { user: { id: userId } },

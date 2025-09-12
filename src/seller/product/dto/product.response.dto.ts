@@ -8,4 +8,5 @@ export class ProductResponseDto {
   images?: string[];
   brandName: string | null;
   categoryName: string | null;
+  tags?: string;
 }

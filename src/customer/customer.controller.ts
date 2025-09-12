@@ -21,17 +21,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage, MulterError } from 'multer';
 import { CreateCustomerDto } from './dto/create.customer.dto';
 import { Customer } from './entity/signup.entity';
-import { CustomerGuard } from './customer.guard';
 import { UpdatePasswordDto } from './dto/updatePassword.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('customer')
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
-
-  @Post('login')
-  async login(@Body() body: { email: string; password: string }): Promise<{ token: string }> {
-    return this.customerService.login(body.email, body.password);
-  }
 
   @Post('create')
   @UsePipes(new ValidationPipe({ transform: true }))
@@ -61,31 +56,31 @@ export class CustomerController {
   }
 
   @Get('profile')
-  @UseGuards(CustomerGuard)
+  @UseGuards(AuthGuard)
   getProfile(@Req() req) {
     const id: string = req.user.id;
     return this.customerService.getProfile(id);
   }
 
-  @UseGuards(CustomerGuard)
+  @UseGuards(AuthGuard)
   @Patch('updatephone/:id')
   updatePhone(@Param('id') id: string, @Body('phone') phone: number) {
     return this.customerService.updatePhoneNumber(id, phone);
   }
 
-  @UseGuards(CustomerGuard)
+  @UseGuards(AuthGuard)
   @Get('fullnamenull')
   getCustomerNullFullName() {
     return this.customerService.getCustomerNullFullName();
   }
 
-  @UseGuards(CustomerGuard)
+  @UseGuards(AuthGuard)
   @Delete('deletecustomer')
   deleteCustomer(@Query('id', ParseIntPipe) id: string) {
     return this.customerService.deleteCustomer(id);
   }
 
-  @UseGuards(CustomerGuard)
+  @UseGuards(AuthGuard)
   @Delete('deleteprofile')
   async deleteProfile(@Req() req): Promise<{ message: string }> {
     const id: string = req.user.id;
@@ -93,7 +88,7 @@ export class CustomerController {
   }
 
   @Patch('passwordupdate')
-  @UseGuards(CustomerGuard)
+  @UseGuards(AuthGuard)
   updatePassword(
     @Req() req,
     @Body() updatePasswordDto: UpdatePasswordDto,
@@ -102,7 +97,7 @@ export class CustomerController {
   }
 
   @Patch('profile/update')
-  @UseGuards(CustomerGuard)
+  @UseGuards(AuthGuard)
   async updateProfile(@Req() req, @Body() updateDto: Partial<CreateCustomerDto>) {
     const id: string = req.user.id;
     return this.customerService.updateProfile(id, updateDto);

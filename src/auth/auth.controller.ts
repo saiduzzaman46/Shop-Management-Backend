@@ -18,6 +18,7 @@ export class AuthController {
   ): Promise<{ message: string; role: string }> {
     const { token, role } = await this.authService.signIn(signInDto);
     const maxAge = Number(process.env.JWT_COOKIE_MAX_AGE) || 1000 * 60 * 60 * 24;
+    console.log('Setting cookie with token:', token); // Debugging line
 
     res.cookie('jwt', token, {
       httpOnly: true,

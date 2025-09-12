@@ -23,29 +23,6 @@ export class CustomerService {
     private readonly mailerService: MailerService,
   ) {}
 
-  async login(email: string, password: string): Promise<{ token: string }> {
-    if (!email || !password) {
-      throw new BadRequestException('Email and password are required');
-    }
-
-    const user = await this.userRepository.findOne({
-      where: { email },
-      select: ['id', 'email', 'password', 'role'],
-    });
-
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new BadRequestException({
-        statusCode: 401,
-        message: 'Invalid email or password',
-      });
-    }
-
-    const payload = { id: user.id, role: user.role };
-    const token = await this.jwtService.signAsync(payload);
-
-    return { token };
-  }
-
   async createCustomer(createCustomerDto: CreateCustomerDto): Promise<Customer> {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(createCustomerDto.password, salt);

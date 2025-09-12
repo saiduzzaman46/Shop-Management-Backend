@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { SignInDto } from './dto/user.signin.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entity/user.entity';
@@ -10,6 +16,7 @@ import { getPasswordResetTemplate } from 'template/password.reset.template';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { UpdatePasswordDto } from './dto/updatePassword.dto';
+import { stat } from 'fs';
 
 @Injectable()
 export class AuthService {
@@ -75,7 +82,13 @@ export class AuthService {
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
-      throw new BadRequestException('Old password is incorrect');
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          message: 'Old password is incorrect',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const salt = await bcrypt.genSalt();
