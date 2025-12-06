@@ -16,7 +16,6 @@ import { getPasswordResetTemplate } from 'template/password.reset.template';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { UpdatePasswordDto } from './dto/updatePassword.dto';
-import { stat } from 'fs';
 
 @Injectable()
 export class AuthService {
@@ -48,7 +47,7 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({
       where: { email },
-      select: ['id', 'email', 'password', 'role'],
+      select: ['id', 'email', 'password', 'role', 'updateAt'],
     });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -71,7 +70,14 @@ export class AuthService {
   ): Promise<{ message: string }> {
     const { oldPassword, newPassword, confirmPassword } = updatePasswordDto;
 
-    const user = await this.findUser(userId);
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'email', 'password'],
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    // console.log(user);
 
     if (newPassword !== confirmPassword) {
       throw new BadRequestException('New password and confirm password do not match');
@@ -94,7 +100,7 @@ export class AuthService {
     const salt = await bcrypt.genSalt();
     user.password = await bcrypt.hash(newPassword, salt);
 
-    user.updateAt = new Date();
+    // user.updateAt = new Date();
 
     await this.userRepository.save(user);
     return { message: 'Password updated successfully' };

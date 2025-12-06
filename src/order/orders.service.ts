@@ -8,9 +8,12 @@ import { Payment } from './entities/payment.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CartItem } from './entities/cart-item.entity';
 import { User } from 'src/auth/entity/user.entity';
+import * as Pusher from 'pusher';
 
 @Injectable()
 export class OrdersService {
+  private readonly pusher: Pusher;
+
   constructor(
     @InjectRepository(Order) private readonly orderRepo: Repository<Order>,
     @InjectRepository(OrderItem) private readonly orderItemRepo: Repository<OrderItem>,
@@ -18,26 +21,29 @@ export class OrdersService {
     @InjectRepository(Payment) private readonly paymentRepo: Repository<Payment>,
     @InjectRepository(CartItem) private readonly cartRepo: Repository<CartItem>,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-  ) {}
+  ) {
+    // Initialize Pusher here
+    this.pusher = new Pusher({
+      appId: process.env.PUSHER_APP_ID!,
+      key: process.env.PUSHER_KEY!,
+      secret: process.env.PUSHER_SECRET!,
+      cluster: process.env.PUSHER_CLUSTER!,
+      useTLS: true,
+    });
+  }
 
   /** Add product to cart */
   async addToCart(userId: string, productId: string, quantity: number) {
-    // Step 1: Fetch the customer linked to this user
     const user = await this.userRepository.findOne({
       where: { id: userId },
       relations: ['customer'],
     });
-
-    if (!user || !user.customer) {
-      throw new NotFoundException('Customer profile not found for this user');
-    }
+    if (!user || !user.customer) throw new NotFoundException('Customer profile not found');
     const customerId = user.customer.id;
 
-    // Step 2: Fetch the product
     const product = await this.productRepo.findOneBy({ productId });
     if (!product) throw new NotFoundException('Product not found');
 
-    // Step 3: Check if item already exists in cart
     const existing = await this.cartRepo.findOne({
       where: { customer: { id: customerId }, product: { productId } },
       relations: ['product', 'customer'],
@@ -48,7 +54,6 @@ export class OrdersService {
       return this.cartRepo.save(existing);
     }
 
-    // Step 4: Create new cart item
     const cartItem = this.cartRepo.create({
       customer: { id: customerId } as any,
       product: { productId } as any,
@@ -58,7 +63,14 @@ export class OrdersService {
   }
 
   /** Get cart items */
-  async getCart(customerId: string) {
+  async getCart(userId: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['customer'],
+    });
+    if (!user || !user.customer) throw new NotFoundException('Customer profile not found');
+    const customerId = user.customer.id;
+
     return this.cartRepo.find({
       where: { customer: { id: customerId } },
       relations: ['product'],
@@ -70,18 +82,26 @@ export class OrdersService {
     return this.cartRepo.delete(cartId);
   }
 
-  /** Checkout: convert cart to order */
-  async checkout(customerId: string) {
-    const cartItems = await this.getCart(customerId);
+  /** Checkout cart and create order with Pusher notifications */
+  async checkout(userId: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['customer'],
+    });
+    if (!user || !user.customer) throw new NotFoundException('Customer profile not found');
+    const customerId = user.customer.id;
+
+    const cartItems = await this.cartRepo.find({
+      where: { customer: { id: customerId } },
+      relations: ['product'],
+    });
     if (cartItems.length === 0) throw new NotFoundException('Cart is empty');
 
-    // Calculate total
     const total = cartItems.reduce(
       (sum, item) => sum + Number(item.product.price) * item.quantity,
       0,
     );
 
-    // Create order
     const order = this.orderRepo.create({
       customer: { id: customerId } as any,
       total,
@@ -89,7 +109,6 @@ export class OrdersService {
     });
     const savedOrder = await this.orderRepo.save(order);
 
-    // Save order items & decrement product stock
     for (const item of cartItems) {
       await this.orderItemRepo.save(
         this.orderItemRepo.create({
@@ -99,14 +118,23 @@ export class OrdersService {
           price: item.product.price,
         }),
       );
+
       await this.productRepo.decrement(
         { productId: item.product.productId },
         'quantity',
         item.quantity,
       );
+
+      // Notify seller via Pusher
+      const sellerId = 'a0022773-f1f5-4aed-8df9-b43cec8b9cd8'; // Make sure Product entity has sellerId
+      await this.pusher.trigger(`seller-${sellerId}`, 'new-order', {
+        orderId: savedOrder.id,
+        productName: item.product.title,
+        quantity: item.quantity,
+        total: savedOrder.total,
+      });
     }
 
-    // Clear cart
     await this.cartRepo.delete({ customer: { id: customerId } });
 
     return this.orderRepo.findOne({
@@ -116,7 +144,14 @@ export class OrdersService {
   }
 
   /** Find all orders of a customer */
-  async findByCustomer(customerId: string) {
+  async findByCustomer(userId: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['customer'],
+    });
+    if (!user || !user.customer) throw new NotFoundException('Customer profile not found');
+    const customerId = user.customer.id;
+
     return this.orderRepo.find({
       where: { customer: { id: customerId } },
       relations: ['items', 'items.product', 'payments'],
@@ -134,10 +169,7 @@ export class OrdersService {
     if (order.customer.id !== customerId)
       throw new ForbiddenException('This order does not belong to you');
 
-    const payment = this.paymentRepo.create({
-      ...dto,
-      order,
-    });
+    const payment = this.paymentRepo.create({ ...dto, order });
     const saved = await this.paymentRepo.save(payment);
 
     if (saved.status === 'completed') {

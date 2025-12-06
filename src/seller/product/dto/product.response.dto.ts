@@ -9,4 +9,5 @@ export class ProductResponseDto {
   brandName: string | null;
   categoryName: string | null;
   tags?: string;
+  sellerId: string;
 }

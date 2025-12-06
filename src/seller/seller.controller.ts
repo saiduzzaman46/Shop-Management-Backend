@@ -89,6 +89,7 @@ export class SellerController {
     @Body() updatePasswordDto: UpdatePasswordDto,
   ): Promise<{ message: string }> {
     const id: string = req.user.id;
+    // console.log('Controller received DTO:', updatePasswordDto, id);
     return this.authService.updatePassword(id, updatePasswordDto);
   }
 

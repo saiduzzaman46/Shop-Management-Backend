@@ -10,9 +10,11 @@ import { ProductResponseDto } from './dto/product.response.dto';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { UpadatateProductDto } from './dto/update.product.dto';
+import * as Pusher from 'pusher';
 
 @Injectable()
 export class ProductService {
+  private readonly pusher: Pusher;
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
@@ -22,7 +24,15 @@ export class ProductService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Brand)
     private readonly brandRepository: Repository<Brand>,
-  ) {}
+  ) {
+    this.pusher = new Pusher({
+      appId: process.env.PUSHER_APP_ID!,
+      key: process.env.PUSHER_KEY!,
+      secret: process.env.PUSHER_SECRET!,
+      cluster: process.env.PUSHER_CLUSTER!,
+      useTLS: true,
+    });
+  }
 
   async createProduct(createProductDto: CreateProductDto, userId: string): Promise<Product> {
     const seller = await this.sellerRepository.findOne({
@@ -65,21 +75,28 @@ export class ProductService {
       select: ['id'],
     });
 
-    if (!seller) {
-      throw new BadRequestException('Seller not found for the authenticated user.');
-    }
+    if (!seller) throw new BadRequestException('Seller not found.');
 
     const product = await this.productRepository.findOne({
       where: { productId, seller: { id: seller.id } },
     });
 
-    if (!product) {
+    if (!product)
       throw new BadRequestException(
         'Product not found or you are not authorized to update this product.',
       );
-    }
+
     Object.assign(product, updateProductDto);
-    return await this.productRepository.save(product);
+    const updatedProduct = await this.productRepository.save(product);
+
+    // 🔔 Trigger Pusher notification
+    await this.pusher.trigger(`seller-${userId}`, 'product-updated', {
+      productId: updatedProduct.productId,
+      title: updatedProduct.title,
+      message: 'Your product has been updated successfully!',
+    });
+
+    return updatedProduct;
   }
 
   // ✅ Update product images only
@@ -139,12 +156,13 @@ export class ProductService {
       brandName: p.brand?.name || null,
       categoryName: p.category?.name || null,
       tags: p.tags,
+      sellerId: p.seller.id,
     }));
   }
   async getProductById(productId: string): Promise<ProductResponseDto> {
     const product = await this.productRepository.findOne({
       where: { productId },
-      relations: ['seller', 'category', 'brand'],
+      relations: ['seller', 'seller.user', 'category', 'brand'], // include user relation
     });
 
     if (!product) {
@@ -162,6 +180,7 @@ export class ProductService {
       brandName: product.brand?.name || null,
       categoryName: product.category?.name || null,
       tags: product.tags,
+      sellerId: product.seller.user.id, // ✅ use actual user ID
     };
   }
 
